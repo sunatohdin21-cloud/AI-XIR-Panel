@@ -3,29 +3,46 @@ name: Build AI XIR APK
 on:
   workflow_dispatch:
   push:
-    paths:
-      - '**.zip'
-      - '.github/workflows/main.yml'
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find project files
-        run: |
-          find . -maxdepth 3 -type f | sort
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      - name: Check Android project
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract Android project
         run: |
-          if [ -f settings.gradle ]; then
-            echo "Android project found"
-          elif [ -f AI_XIR_ModMenu_Android_Project.zip ]; then
-            echo "Project ZIP found; extraction setup needed"
-          else
-            echo "Android source files not uploaded yet."
-            exit 1
-          fi
+          unzip -q AI_XIR_ModMenu_Android_Project.zip -d extracted
+
+      - name: Build APK
+        run: |
+          cd extracted/AI_XIR_ModMenu_Android
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-XIR-debug-apk
+          path: extracted/AI_XIR_ModMenu_Android/app/build/outputs/apk/debug/app-debug.apk
