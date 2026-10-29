@@ -1,0 +1,31 @@
+name: Build AI XIR APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/main.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find project files
+        run: |
+          find . -maxdepth 3 -type f | sort
+
+      - name: Check Android project
+        run: |
+          if [ -f settings.gradle ]; then
+            echo "Android project found"
+          elif [ -f AI_XIR_ModMenu_Android_Project.zip ]; then
+            echo "Project ZIP found; extraction setup needed"
+          else
+            echo "Android source files not uploaded yet."
+            exit 1
+          fi
