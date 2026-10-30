@@ -11,6 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,6 +25,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses
+
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
@@ -34,15 +38,17 @@ jobs:
 
       - name: Extract Android project
         run: |
-          unzip -q AI_XIR_ModMenu_Android_Project.zip -d extracted
+          python3 -c "import zipfile; zipfile.ZipFile('AI_XIR_ModMenu_Android_Project.zip').extractall('extracted')"
 
       - name: Build APK
         run: |
-          cd extracted/AI_XIR_ModMenu_Android
+          PROJECT_DIR=$(find extracted -name settings.gradle -printf '%h\n' | head -n 1)
+          test -n "$PROJECT_DIR"
+          cd "$PROJECT_DIR"
           gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AI-XIR-debug-apk
-          path: extracted/AI_XIR_ModMenu_Android/app/build/outputs/apk/debug/app-debug.apk
+          path: extracted/**/app/build/outputs/apk/debug/app-debug.apk
